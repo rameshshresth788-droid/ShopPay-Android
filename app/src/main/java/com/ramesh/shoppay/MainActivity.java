@@ -20,10 +20,14 @@ public class MainActivity extends Activity {
     private final String NOTES = "notes";
     private String selectedDate = today();
     private LinearLayout root, recordsBox, notesBox;
-    private TextView dateText, cashTotal, onlineTotal, grandTotal, noteTotal;
-    private final int bg = Color.rgb(9, 10, 18);
-    private final int panel = Color.rgb(22, 24, 40);
-    private final int purple = Color.rgb(124, 83, 235);
+    private TextView dateText, cashTotal, onlineTotal, grandTotal, noteTotal, cashCheck, onlineCheck, savedStatus;
+    private EditText actualOnlineInput;
+    private final String ACTUAL_ONLINE = "actual_online";
+    private final String DAILY_SAVED = "daily_saved";
+    private final int bg = Color.rgb(7, 10, 20);
+    private final int panel = Color.rgb(19, 25, 43);
+    private final int purple = Color.rgb(117, 92, 255);
+    private final int muted = Color.rgb(159, 171, 195);
     private final int[] denominations = {500, 200, 100, 50, 20, 10, 5, 2, 1};
 
     private String today() {
@@ -53,6 +57,14 @@ public class MainActivity extends Activity {
         GradientDrawable d = new GradientDrawable();
         d.setColor(color);
         d.setCornerRadius(radius);
+        d.setStroke(1, 0x334F6B91);
+        return d;
+    }
+
+    private GradientDrawable gradient(int first, int second, int radius) {
+        GradientDrawable d = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{first, second});
+        d.setCornerRadius(radius);
         return d;
     }
 
@@ -62,15 +74,42 @@ public class MainActivity extends Activity {
         t.setTextSize(size);
         t.setTextColor(color);
         t.setGravity(Gravity.CENTER);
+        t.setFontFeatureSettings("kern");
         return t;
     }
 
+    private void animateIn(View view, int index) {
+        view.setAlpha(0f);
+        view.setTranslationY(18f);
+        view.animate().alpha(1f).translationY(0f)
+                .setStartDelay(Math.min(index * 35L, 210L))
+                .setDuration(260L).start();
+    }
+
     private TextView button(String label, int color) {
-        TextView b = text(label, 16, Color.WHITE);
+        TextView b = text(label, 15, Color.WHITE);
         b.setTypeface(null, Typeface.BOLD);
-        b.setBackground(shape(color, 24));
-        b.setPadding(18, 16, 18, 16);
+        b.setBackground(gradient(color, adjustColor(color, 0.78f), 22));
+        b.setPadding(16, 15, 16, 15);
+        b.setElevation(3f);
+        b.setClickable(true);
+        b.setFocusable(true);
+        b.setOnTouchListener((v, event) -> {
+            if (event.getAction() == android.view.MotionEvent.ACTION_DOWN) {
+                v.animate().scaleX(0.97f).scaleY(0.97f).setDuration(80).start();
+            } else if (event.getAction() == android.view.MotionEvent.ACTION_UP ||
+                    event.getAction() == android.view.MotionEvent.ACTION_CANCEL) {
+                v.animate().scaleX(1f).scaleY(1f).setDuration(110).start();
+            }
+            return false;
+        });
         return b;
+    }
+
+    private int adjustColor(int color, float factor) {
+        return Color.rgb(Math.min(255, (int)(Color.red(color) * factor)),
+                Math.min(255, (int)(Color.green(color) * factor)),
+                Math.min(255, (int)(Color.blue(color) * factor)));
     }
 
     private LinearLayout column() {
@@ -85,39 +124,55 @@ public class MainActivity extends Activity {
     }
 
     private void section(LinearLayout box, View child) {
-        child.setPadding(14, 14, 14, 14);
+        child.setPadding(16, 16, 16, 16);
         child.setBackground(shape(panel, 24));
-        LinearLayout.LayoutParams p =
-                new LinearLayout.LayoutParams(-1, -2);
-        p.setMargins(0, 8, 0, 8);
+        child.setElevation(2f);
+        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1, -2);
+        p.setMargins(0, 7, 0, 7);
         box.addView(child, p);
+        animateIn(child, box.getChildCount());
     }
 
     @Override
     public void onCreate(Bundle state) {
         super.onCreate(state);
-        getWindow().setStatusBarColor(bg);
-        getWindow().setNavigationBarColor(bg);
+        getWindow().setStatusBarColor(0xFF080D1B);
+        getWindow().setNavigationBarColor(0xFF080D1B);
+        if (android.os.Build.VERSION.SDK_INT >= 29) {
+            getWindow().setNavigationBarContrastEnforced(false);
+            getWindow().setStatusBarContrastEnforced(false);
+        }
         buildScreen();
     }
 
     private void buildScreen() {
         ScrollView scroll = new ScrollView(this);
-        scroll.setBackgroundColor(bg);
+        scroll.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                new int[]{0xFF080D1B, 0xFF11152A, 0xFF080D1B}));
+        scroll.setFillViewport(true);
+        scroll.setOverScrollMode(View.OVER_SCROLL_NEVER);
         root = column();
-        root.setPadding(18, 18, 18, 24);
+        root.setPadding(18, 18, 18, 28);
         scroll.addView(root);
         setContentView(scroll);
 
-        TextView title = text("ShopPay", 30, Color.WHITE);
-        title.setTypeface(null, Typeface.BOLD);
+        TextView logo = text("S", 25, Color.WHITE);
+        logo.setTypeface(null, Typeface.BOLD);
+        logo.setBackground(gradient(0xFF7C5CFF, 0xFF22D3C5, 22));
+        LinearLayout.LayoutParams logoSize = new LinearLayout.LayoutParams(58, 58);
+        logoSize.gravity = Gravity.CENTER_HORIZONTAL;
+        root.addView(logo, logoSize);
+        TextView title = text("SHOPPAY", 28, Color.WHITE);
+        title.setTypeface(Typeface.create("sans-serif-black", Typeface.BOLD));
         root.addView(title);
-        root.addView(text("Simple Daily Hisaab", 17,
-                Color.LTGRAY));
-        gap(root, 18);
+        TextView tagline = text("SMART DAILY HISSAAB  •  2050 EDITION", 11, muted);
+        tagline.setLetterSpacing(0.08f);
+        root.addView(tagline);
+        gap(root, 14);
 
         LinearLayout datePanel = column();
-        dateText = text("", 19, Color.WHITE);
+        dateText = text("", 16, Color.WHITE);
+        dateText.setTypeface(null, Typeface.BOLD);
         dateText.setPadding(12, 14, 12, 14);
         dateText.setOnClickListener(v -> {
             Calendar c = Calendar.getInstance();
@@ -153,9 +208,14 @@ public class MainActivity extends Activity {
         buttons.addView(onlineBtn, half);
         section(root, buttons);
 
-        cashTotal = text("", 21, 0xFFFFC44D);
-        onlineTotal = text("", 21, 0xFF53D7C5);
+        cashTotal = text("", 18, 0xFFFFC65C);
+        cashTotal.setPadding(8, 10, 8, 10);
+        onlineTotal = text("", 18, 0xFF55E6D1);
+        onlineTotal.setPadding(8, 10, 8, 10);
         grandTotal = text("", 23, Color.WHITE);
+        grandTotal.setTypeface(null, Typeface.BOLD);
+        grandTotal.setPadding(8, 12, 8, 12);
+        grandTotal.setBackground(gradient(0xFF3A2D85, 0xFF164D5B, 20));
 
         LinearLayout totals = column();
         totals.addView(cashTotal);
@@ -179,8 +239,52 @@ public class MainActivity extends Activity {
         noteTotal = text("Notes Total: ₹0", 21, 0xFFFFC44D);
         section(root, noteTotal);
 
-        root.addView(text("Data phone mein save hota hai.",
-                13, Color.LTGRAY));
+        TextView reconcileTitle = text("HISAAB MILAN", 20, 0xFFB8A5FF);
+        reconcileTitle.setTypeface(null, Typeface.BOLD);
+        root.addView(reconcileTitle);
+
+        cashCheck = text("Cash difference: ₹0", 17, Color.WHITE);
+        section(root, cashCheck);
+
+        LinearLayout onlineCheckPanel = column();
+        onlineCheckPanel.addView(text("Actual UPI / Online total", 16, Color.WHITE));
+        actualOnlineInput = new EditText(this);
+        actualOnlineInput.setSingleLine(true);
+        actualOnlineInput.setHint("Bank/UPI app ka total (₹)");
+        actualOnlineInput.setInputType(8194);
+        actualOnlineInput.setTextColor(Color.WHITE);
+        actualOnlineInput.setHintTextColor(Color.LTGRAY);
+        actualOnlineInput.setBackground(shape(0xFF30334A, 16));
+        actualOnlineInput.setPadding(14, 8, 14, 8);
+        onlineCheckPanel.addView(actualOnlineInput);
+        actualOnlineInput.setText(String.valueOf(read(ACTUAL_ONLINE).optDouble(selectedDate, 0)));
+        actualOnlineInput.addTextChangedListener(new TextWatcher() {
+            public void beforeTextChanged(CharSequence s, int st, int c, int a) {}
+            public void onTextChanged(CharSequence s, int st, int before, int count) {
+                try {
+                    JSONObject all = read(ACTUAL_ONLINE);
+                    String val = s.toString().trim();
+                    all.put(selectedDate, val.isEmpty() ? 0 : Double.parseDouble(val));
+                    save(ACTUAL_ONLINE, all);
+                } catch (Exception ignored) {}
+                updateReconciliation();
+            }
+            public void afterTextChanged(Editable e) {}
+        });
+        section(root, onlineCheckPanel);
+        onlineCheck = text("Online difference: ₹0", 17, Color.WHITE);
+        section(root, onlineCheck);
+
+        TextView saveToday = button("✓  SAVE TODAY", 0xFF7654F6);
+        saveToday.setOnClickListener(v -> saveToday());
+        section(root, saveToday);
+        TextView history = button("▣  VIEW SAVED HISTORY", 0xFF30334A);
+        history.setOnClickListener(v -> showHistory());
+        section(root, history);
+        savedStatus = text("", 13, Color.LTGRAY);
+        root.addView(savedStatus);
+
+        root.addView(text("Data phone mein save hota hai.", 13, Color.LTGRAY));
         refresh();
     }
 
@@ -191,9 +295,10 @@ public class MainActivity extends Activity {
         EditText amount = new EditText(this);
         amount.setHint("Amount (₹)");
         amount.setInputType(8194);
-        amount.setTextColor(Color.BLACK);
-        amount.setHintTextColor(Color.GRAY);
-        amount.setBackgroundColor(Color.WHITE);
+        amount.setTextColor(Color.WHITE);
+        amount.setHintTextColor(muted);
+        amount.setPadding(16, 12, 16, 12);
+        amount.setBackground(shape(0xFF252D45, 16));
         form.addView(amount);
 
         Spinner gender = new Spinner(this);
@@ -249,6 +354,9 @@ public class MainActivity extends Activity {
                 + "     📅 Change Date");
         recordsBox.removeAllViews();
         notesBox.removeAllViews();
+        if (actualOnlineInput != null) {
+            actualOnlineInput.setText(String.valueOf(read(ACTUAL_ONLINE).optDouble(selectedDate, 0)));
+        }
 
         double cash = 0, online = 0;
         JSONArray list = entries();
@@ -295,7 +403,7 @@ public class MainActivity extends Activity {
 
         cashTotal.setText("Offline Cash: ₹" + cash);
         onlineTotal.setText("Online Payment: ₹" + online);
-        grandTotal.setText("Total Payment: ₹" + (cash + online));
+        grandTotal.setText("GRAND TOTAL: ₹" + money(cash + online));
 
         JSONObject allNotes = read(NOTES);
         JSONObject dayNotes = allNotes.optJSONObject(selectedDate);
@@ -314,7 +422,9 @@ public class MainActivity extends Activity {
             count.setSingleLine(true);
             count.setHint("Count");
             count.setTextColor(Color.WHITE);
-            count.setHintTextColor(Color.LTGRAY);
+            count.setHintTextColor(muted);
+            count.setBackground(shape(0xFF252D45, 14));
+            count.setPadding(12, 7, 12, 7);
             count.setInputType(2);
             count.setText(String.valueOf(currentNotes.optInt(
                     String.valueOf(denomination), 0)));
@@ -328,7 +438,8 @@ public class MainActivity extends Activity {
                 double sum = 0;
                 for (int d : denominations)
                     sum += d * currentNotes.optInt(String.valueOf(d), 0);
-                noteTotal.setText("Notes Total: ₹" + sum);
+                noteTotal.setText("Notes Total: ₹" + money(sum));
+                updateReconciliation();
             };
             calculate.run();
 
@@ -353,5 +464,107 @@ public class MainActivity extends Activity {
 
             notesBox.addView(row);
         }
+        updateReconciliation();
+        if (savedStatus != null) {
+            savedStatus.setText(read(DAILY_SAVED).has(selectedDate)
+                    ? "✓ " + selectedDate + " ka hisaab saved hai" : "Aaj ka hisaab abhi save nahi hua");
+        }
+    }
+
+    private String money(double n) {
+        return String.format(Locale.US, "%.2f", n).replaceAll("\\.00$", "");
+    }
+
+    private double getCashTotal() {
+        double total = 0;
+        JSONArray list = entries();
+        for (int i = 0; i < list.length(); i++) {
+            JSONObject r = list.optJSONObject(i);
+            if (r != null && "Cash".equals(r.optString("type"))) total += r.optDouble("amount", 0);
+        }
+        return total;
+    }
+
+    private double getOnlineTotal() {
+        double total = 0;
+        JSONArray list = entries();
+        for (int i = 0; i < list.length(); i++) {
+            JSONObject r = list.optJSONObject(i);
+            if (r != null && "Online".equals(r.optString("type"))) total += r.optDouble("amount", 0);
+        }
+        return total;
+    }
+
+    private double getNoteTotal() {
+        JSONObject notes = read(NOTES).optJSONObject(selectedDate);
+        if (notes == null) return 0;
+        double total = 0;
+        for (int d : denominations) total += d * notes.optInt(String.valueOf(d), 0);
+        return total;
+    }
+
+    private void updateReconciliation() {
+        if (cashCheck == null || onlineCheck == null) return;
+        double cash = getCashTotal(), counted = getNoteTotal();
+        double diff = counted - cash;
+        if (Math.abs(diff) < 0.005) cashCheck.setText("OFFLINE: Hisaab ₹" + money(cash) + "  •  Notes ₹" + money(counted) + "\n✓ Cash mil gaya: ₹0 difference");
+        else if (diff < 0) cashCheck.setText("OFFLINE: Hisaab ₹" + money(cash) + "  •  Notes ₹" + money(counted) + "\n🔴 CASH KAMI: ₹" + money(-diff));
+        else cashCheck.setText("OFFLINE: Hisaab ₹" + money(cash) + "  •  Notes ₹" + money(counted) + "\n🟢 EXTRA CASH: ₹" + money(diff));
+
+        double online = getOnlineTotal();
+        double actual = read(ACTUAL_ONLINE).optDouble(selectedDate, 0);
+        double odiff = actual - online;
+        if (Math.abs(odiff) < 0.005) onlineCheck.setText("ONLINE: App ₹" + money(online) + "  •  Actual UPI ₹" + money(actual) + "\n✓ Online mil gaya: ₹0 difference");
+        else if (odiff < 0) onlineCheck.setText("ONLINE: App ₹" + money(online) + "  •  Actual UPI ₹" + money(actual) + "\n🔴 ONLINE KAMI: ₹" + money(-odiff));
+        else onlineCheck.setText("ONLINE: App ₹" + money(online) + "  •  Actual UPI ₹" + money(actual) + "\n🟢 EXTRA ONLINE: ₹" + money(odiff));
+    }
+
+    private void saveToday() {
+        try {
+            JSONObject snapshot = new JSONObject();
+            snapshot.put("cash", getCashTotal());
+            snapshot.put("online", getOnlineTotal());
+            snapshot.put("notes", getNoteTotal());
+            snapshot.put("actualOnline", read(ACTUAL_ONLINE).optDouble(selectedDate, 0));
+            snapshot.put("grandTotal", getCashTotal() + getOnlineTotal());
+            snapshot.put("savedAt", new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(new Date()));
+            JSONObject all = read(DAILY_SAVED);
+            all.put(selectedDate, snapshot);
+            save(DAILY_SAVED, all);
+            if (savedStatus != null) savedStatus.setText("✓ " + selectedDate + " ka hisaab save ho gaya");
+            Toast.makeText(this, "Aaj ka hisaab save ho gaya", Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Toast.makeText(this, "Save nahi hua, dobara try karein", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void showHistory() {
+        JSONObject all = read(DAILY_SAVED);
+        if (all.length() == 0) {
+            new AlertDialog.Builder(this).setTitle("Saved History")
+                    .setMessage("Abhi koi saved day nahi hai. Pehle SAVE TODAY dabayein.")
+                    .setPositiveButton("OK", null).show();
+            return;
+        }
+        ArrayList<String> dates = new ArrayList<>();
+        JSONArray values = new JSONArray();
+        Iterator<String> keys = all.keys();
+        while (keys.hasNext()) dates.add(keys.next());
+        Collections.sort(dates, Collections.reverseOrder());
+        String[] items = dates.toArray(new String[0]);
+        new AlertDialog.Builder(this).setTitle("Saved Daily History")
+                .setItems(items, (dialog, which) -> {
+                    String date = items[which];
+                    JSONObject r = all.optJSONObject(date);
+                    if (r == null) return;
+                    new AlertDialog.Builder(this).setTitle(date + " ka Hisaab")
+                            .setMessage("Offline Cash: ₹" + money(r.optDouble("cash", 0))
+                                    + "\nOnline App Total: ₹" + money(r.optDouble("online", 0))
+                                    + "\nNotes Count: ₹" + money(r.optDouble("notes", 0))
+                                    + "\nActual UPI: ₹" + money(r.optDouble("actualOnline", 0))
+                                    + "\nGrand Total: ₹" + money(r.optDouble("grandTotal", 0))
+                                    + "\nSaved at: " + r.optString("savedAt"))
+                            .setPositiveButton("OK", null).show();
+                }).setNegativeButton("Close", null).show();
     }
 }
