@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebViewClient;
 import android.view.View;
 import android.view.Window;
@@ -33,6 +34,20 @@ public class MainActivity extends Activity {
         settings.setAllowContentAccess(true);
         settings.setDefaultTextEncodingName("UTF-8");
         settings.setJavaScriptCanOpenWindowsAutomatically(false);
+        webView.addJavascriptInterface(new Object() {
+            @JavascriptInterface
+            public String getItem(String key) {
+                return getSharedPreferences("ShopPayStorage", MODE_PRIVATE)
+                    .getString(key, null);
+            }
+
+            @JavascriptInterface
+            public boolean setItem(String key, String value) {
+                return getSharedPreferences("ShopPayStorage", MODE_PRIVATE)
+                    .edit().putString(key, value).commit();
+            }
+        }, "AndroidStorage");
+
         webView.setWebViewClient(new WebViewClient());
         webView.setWebChromeClient(new WebChromeClient());
         webView.loadUrl("file:///android_asset/index.html");
