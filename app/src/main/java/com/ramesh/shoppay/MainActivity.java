@@ -19,7 +19,7 @@ public class MainActivity extends Activity {
     private final String DATA = "payments";
     private final String NOTES = "notes";
     private String selectedDate = today();
-    private LinearLayout root, recordsBox, notesBox;
+    private LinearLayout root, recordsBox, cashRecordsBox, onlineRecordsBox, notesBox;
     private TextView dateText, cashTotal, onlineTotal, grandTotal, noteTotal, cashCheck, onlineCheck, savedStatus;
     private EditText actualOnlineInput;
     private final String ACTUAL_ONLINE = "actual_online";
@@ -223,11 +223,17 @@ public class MainActivity extends Activity {
         totals.addView(grandTotal);
         section(root, totals);
 
-        TextView recordTitle = text("Today's Records", 20, Color.WHITE);
-        recordTitle.setTypeface(null, Typeface.BOLD);
-        root.addView(recordTitle);
-        recordsBox = column();
-        section(root, recordsBox);
+        TextView cashRecordTitle = text("🟠 OFFLINE CASH RECORDS", 20, 0xFFFFC65C);
+        cashRecordTitle.setTypeface(null, Typeface.BOLD);
+        root.addView(cashRecordTitle);
+        cashRecordsBox = column();
+        section(root, cashRecordsBox);
+
+        TextView onlineRecordTitle = text("🟢 ONLINE PAYMENT RECORDS", 20, 0xFF55E6D1);
+        onlineRecordTitle.setTypeface(null, Typeface.BOLD);
+        root.addView(onlineRecordTitle);
+        onlineRecordsBox = column();
+        section(root, onlineRecordsBox);
 
         TextView noteTitle = text("Note Calculator", 20, Color.WHITE);
         noteTitle.setTypeface(null, Typeface.BOLD);
@@ -352,7 +358,8 @@ public class MainActivity extends Activity {
 
         dateText.setText("Date: " + selectedDate
                 + "     📅 Change Date");
-        recordsBox.removeAllViews();
+        cashRecordsBox.removeAllViews();
+        onlineRecordsBox.removeAllViews();
         notesBox.removeAllViews();
         if (actualOnlineInput != null) {
             actualOnlineInput.setText(String.valueOf(read(ACTUAL_ONLINE).optDouble(selectedDate, 0)));
@@ -397,8 +404,10 @@ public class MainActivity extends Activity {
                         refresh();
                     }).show());
             line.addView(del);
-            recordsBox.addView(line);
-            gap(recordsBox, 8);
+            LinearLayout targetBox = "Cash".equals(row.optString("type"))
+                    ? cashRecordsBox : onlineRecordsBox;
+            targetBox.addView(line);
+            gap(targetBox, 8);
         }
 
         cashTotal.setText("Offline Cash: ₹" + cash);
@@ -564,7 +573,23 @@ public class MainActivity extends Activity {
                                     + "\nActual UPI: ₹" + money(r.optDouble("actualOnline", 0))
                                     + "\nGrand Total: ₹" + money(r.optDouble("grandTotal", 0))
                                     + "\nSaved at: " + r.optString("savedAt"))
-                            .setPositiveButton("OK", null).show();
+                            .setPositiveButton("OK", null)
+                            .setNegativeButton("DELETE HISTORY", (d, w) ->
+                                    new AlertDialog.Builder(this)
+                                            .setTitle("Delete " + date + "?")
+                                            .setMessage("Kya aap is din ka saved history record delete karna chahte hain? Yeh undo nahi hoga.")
+                                            .setNegativeButton("CANCEL", null)
+                                            .setPositiveButton("DELETE", (confirm, cw) -> {
+                                                JSONObject latest = read(DAILY_SAVED);
+                                                latest.remove(date);
+                                                save(DAILY_SAVED, latest);
+                                                if (savedStatus != null && date.equals(selectedDate)) {
+                                                    savedStatus.setText("Aaj ka hisaab abhi save nahi hua");
+                                                }
+                                                Toast.makeText(this, date + " ki history delete ho gayi", Toast.LENGTH_SHORT).show();
+                                                showHistory();
+                                            }).show()
+                            ).show();
                 }).setNegativeButton("Close", null).show();
     }
 }
