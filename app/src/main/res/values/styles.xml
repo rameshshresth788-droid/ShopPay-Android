@@ -1,9 +1,31 @@
 <resources>
-    <style name="AppTheme" parent="android:style/Theme.Material.Light.NoActionBar">
+    <!-- 2100 theme: deep ink background, neon violet / cyan / pink accents -->
+    <style name="AppTheme" parent="android:style/Theme.Material.NoActionBar">
         <item name="android:fontFamily">sans</item>
-        <item name="android:colorAccent">#8B78FF</item>
-        <item name="android:statusBarColor">#090A12</item>
-        <item name="android:navigationBarColor">#090A12</item>
+        <item name="android:colorAccent">@color/violet</item>
+        <item name="android:windowBackground">@color/ink</item>
+        <item name="android:statusBarColor">@color/ink</item>
+        <item name="android:navigationBarColor">@color/ink</item>
         <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <!-- Glass dialogs with soft pop-in animation -->
+    <style name="ShopPayDialog" parent="android:style/Theme.Material.Dialog.Alert">
+        <item name="android:windowBackground">@drawable/dialog_bg</item>
+        <item name="android:colorAccent">@color/cyan</item>
+        <item name="android:textColorPrimary">#F2F4FF</item>
+        <item name="android:textColorSecondary">#8E94C9</item>
+        <item name="android:windowAnimationStyle">@style/ShopPayDialogAnim</item>
+    </style>
+
+    <style name="ShopPayDatePicker" parent="android:style/Theme.Material.Dialog">
+        <item name="android:windowBackground">@drawable/dialog_bg</item>
+        <item name="android:colorAccent">@color/violet</item>
+        <item name="android:windowAnimationStyle">@style/ShopPayDialogAnim</item>
+    </style>
+
+    <style name="ShopPayDialogAnim" parent="@android:style/Animation.Dialog">
+        <item name="android:windowEnterAnimation">@anim/dialog_in</item>
+        <item name="android:windowExitAnimation">@anim/dialog_out</item>
     </style>
 </resources>
