@@ -68,11 +68,25 @@ public class MainActivity extends Activity {
         return d;
     }
 
+    private Typeface broncoFont;
+
+    private Typeface getBroncoFont() {
+        if (broncoFont == null) {
+            try {
+                broncoFont = Typeface.createFromAsset(getAssets(), "fonts/BroncoPersonalUse.ttf");
+            } catch (Exception e) {
+                broncoFont = Typeface.DEFAULT;
+            }
+        }
+        return broncoFont;
+    }
+
     private TextView text(String value, int size, int color) {
         TextView t = new TextView(this);
         t.setText(value);
         t.setTextSize(size);
         t.setTextColor(color);
+        t.setTypeface(getBroncoFont());
         t.setGravity(Gravity.CENTER);
         t.setFontFeatureSettings("kern");
         return t;
